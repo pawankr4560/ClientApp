@@ -8,9 +8,10 @@ import {
   OverlayModule,
   createGlobalPositionStrategy,
   createOverlayRef
-} from "./chunk-DCIGOQLF.js";
+} from "./chunk-FG4X5B55.js";
 import "./chunk-TOYU7UYN.js";
 import "./chunk-TRGE34PX.js";
+import "./chunk-46HAYV32.js";
 import "./chunk-VENV3F3G.js";
 import {
   BasePortalOutlet,
@@ -23,7 +24,6 @@ import "./chunk-UOVTMCLE.js";
 import {
   _animationsDisabled
 } from "./chunk-XLEJHNJS.js";
-import "./chunk-46HAYV32.js";
 import {
   LiveAnnouncer,
   MatCommonModule

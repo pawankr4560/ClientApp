@@ -1,11 +1,11 @@
 import "./chunk-TRGE34PX.js";
+import {
+  coerceBooleanProperty
+} from "./chunk-46HAYV32.js";
 import "./chunk-VENV3F3G.js";
 import {
   _animationsDisabled
 } from "./chunk-XLEJHNJS.js";
-import {
-  coerceBooleanProperty
-} from "./chunk-46HAYV32.js";
 import {
   ESCAPE,
   FocusMonitor,

@@ -1,4 +1,7 @@
 import {
+  coerceCssPixelValue
+} from "./chunk-46HAYV32.js";
+import {
   _isTestEnvironment
 } from "./chunk-VENV3F3G.js";
 import {
@@ -6,9 +9,6 @@ import {
   PortalModule,
   TemplatePortal
 } from "./chunk-UVZNZZLF.js";
-import {
-  coerceCssPixelValue
-} from "./chunk-46HAYV32.js";
 import {
   ESCAPE,
   hasModifierKey
@@ -2900,4 +2900,4 @@ export {
   CdkConnectedOverlay,
   OverlayModule
 };
-//# sourceMappingURL=chunk-DCIGOQLF.js.map
+//# sourceMappingURL=chunk-FG4X5B55.js.map

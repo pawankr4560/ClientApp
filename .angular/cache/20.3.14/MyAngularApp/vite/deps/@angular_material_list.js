@@ -15,6 +15,9 @@ import {
   RippleRenderer
 } from "./chunk-TOYU7UYN.js";
 import "./chunk-TRGE34PX.js";
+import {
+  coerceBooleanProperty
+} from "./chunk-46HAYV32.js";
 import "./chunk-VENV3F3G.js";
 import {
   _StructuralStylesLoader
@@ -22,9 +25,6 @@ import {
 import {
   _animationsDisabled
 } from "./chunk-XLEJHNJS.js";
-import {
-  coerceBooleanProperty
-} from "./chunk-46HAYV32.js";
 import {
   A,
   CdkObserveContent,
