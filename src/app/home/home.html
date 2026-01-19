@@ -1,0 +1,126 @@
+ <mat-sidenav-container class="layout-container">
+
+  
+  <mat-sidenav
+    #drawer
+    class="sidebar"
+    [mode]="isMobile ? 'over' : 'side'"
+    [opened]="!isMobile"
+  >
+    <h3 class="logo">🎬 MyApp</h3>
+
+<mat-nav-list class="sidebar-menu">
+
+  <ng-container *ngFor="let menu of menus">
+
+    <!-- SINGLE MENU -->
+    <a
+      mat-list-item
+      *ngIf="!menu.children?.length"
+      class="menu-item"
+      [routerLink]="menu.route"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: true }"
+    >
+      <mat-icon matListIcon>{{ menu.icon }}</mat-icon>
+      <span matLine>{{ menu.name }}</span>
+    </a>
+
+    <!-- PARENT MENU -->
+    <mat-expansion-panel *ngIf="menu.children?.length" class="parent-menu">
+
+      <mat-expansion-panel-header>
+        <mat-icon>{{ menu.icon }}</mat-icon>
+        <span class="menu-title">{{ menu.name }}</span>
+      </mat-expansion-panel-header>
+
+      <mat-nav-list class="submenu">
+        <a
+          mat-list-item
+          *ngFor="let child of menu.children"
+          class="submenu-item"
+          [routerLink]="child.route"
+          routerLinkActive="active"
+        >
+          <mat-icon matListIcon>{{ child.icon }}</mat-icon>
+          <span matLine>{{ child.name }}</span>
+        </a>
+      </mat-nav-list>
+
+    </mat-expansion-panel>
+
+  </ng-container>
+
+</mat-nav-list>
+
+  </mat-sidenav>
+
+
+<mat-sidenav
+  #accountDrawer
+  position="end"
+  class="account-sidebar"
+  [mode]="'over'"
+  [opened]="false">
+
+  <div class="account-panel">
+
+   
+    <mat-card class="profile-card">
+      <mat-card-content class="profile-content">
+        <div class="profile-icon">
+          <mat-icon>account_circle</mat-icon>
+        </div>
+        <h3>{{name}}</h3>
+        <p class="email">{{email}}</p>
+        <p class="phone"><mat-icon>phone</mat-icon>{{phone}}</p>
+      </mat-card-content>
+    </mat-card>
+
+   
+    <mat-tab-group class="account-tabs" mat-stretch-tabs>
+      <mat-tab label="Notification (0)">
+        <p class="tab-content">No notifications yet.</p>
+      </mat-tab>
+      <mat-tab label="Messages">
+        <p class="tab-content">No messages yet.</p>
+      </mat-tab>
+      <mat-tab label="Profile">
+        <p class="tab-content">Profile settings here.</p>
+      </mat-tab>
+    </mat-tab-group>
+
+  
+    <button mat-button (click)="logOut()" color="primary" class="logout-btn" >
+      <mat-icon>logout</mat-icon> Log Out
+    </button>
+
+  </div>
+</mat-sidenav>
+
+  <mat-sidenav-content>
+
+
+    <mat-toolbar color="primary" class="navbar">
+      <button mat-icon-button (click)="drawer.toggle()">
+        <mat-icon>menu</mat-icon>
+      </button>
+
+      <span class="spacer"></span>
+
+      <button mat-icon-button (click)="accountDrawer.toggle()">
+        <mat-icon>account_circle</mat-icon>
+      </button>
+    </mat-toolbar>
+
+  
+    <div class="content">
+      <router-outlet></router-outlet>
+    </div>
+
+  </mat-sidenav-content>
+
+</mat-sidenav-container> 
+
+
+
