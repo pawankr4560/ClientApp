@@ -1,0 +1,19 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs/ClientApp/FileContentIndex/176a2ecd-497f-4261-ba5a-a685d1a0d420.vsidx
+/.vs/ClientApp/FileContentIndex/3a4989f6-31ae-4dcb-8f16-cda56d064383.vsidx
+/.vs/ClientApp/FileContentIndex/421b1292-caee-4559-bea2-ae52b76d7d26.vsidx
+/.vs/ClientApp/FileContentIndex/df5f875f-1b74-41f2-894d-1b578aef4169.vsidx
+/.vs/ClientApp/FileContentIndex/77cad441-9cdc-4d05-b6cf-56854f46fed5.vsidx
+/.vs/ClientApp/FileContentIndex/cab19eb2-89b0-4e69-a6fe-8993d973a74e.vsidx
+/.vs/ClientApp/FileContentIndex/0d3d01e1-7b5b-4f42-92e5-56ac209f9b52.vsidx
+/.vs/ClientApp/FileContentIndex/24f08007-0396-4b04-bd56-bbb1b2b362e0.vsidx
+/.vs/ClientApp/FileContentIndex/4fc95625-e38f-42da-8b2c-ac5372e829fe.vsidx
+/.vs/ClientApp/FileContentIndex/88d44056-42b6-4a77-9561-ddc7e869f4b5.vsidx
+/.vs/ClientApp/FileContentIndex/b976e9f5-1d62-4080-97c2-238d639c038e.vsidx
+*.vsidx
+/.vs/ClientApp/FileContentIndex/deea0357-2480-4925-a266-ece9ae22497c.vsidx
+/.vs/slnx.sqlite
+*.sqlite-journal

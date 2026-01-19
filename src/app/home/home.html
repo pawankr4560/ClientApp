@@ -11,45 +11,46 @@
 
 <mat-nav-list class="sidebar-menu">
 
-  <ng-container *ngFor="let menu of menus">
+  <ng-container
+    *ngTemplateOutlet="menuTemplate; context: { $implicit: menus }">
+  </ng-container>
 
-    <!-- SINGLE MENU -->
+  <ng-template #menuTemplate let-items>
+
+  <ng-container *ngFor="let menu of items">
+
+    <!-- LEAF MENU -->
     <a
       mat-list-item
-      *ngIf="!menu.children?.length"
-      class="menu-item"
+      *ngIf="menu.children.length === 0"
       [routerLink]="menu.route"
       routerLinkActive="active"
-      [routerLinkActiveOptions]="{ exact: true }"
+      (click)="$event.stopPropagation()"
     >
-      <mat-icon matListIcon>{{ menu.icon }}</mat-icon>
-      <span matLine>{{ menu.name }}</span>
+      <mat-icon>{{ menu.iconClass }}</mat-icon>
+      <span>{{ menu.title }}</span>
     </a>
 
     <!-- PARENT MENU -->
-    <mat-expansion-panel *ngIf="menu.children?.length" class="parent-menu">
+   <mat-expansion-panel
+  *ngIf="menu.children.length > 0"
+  [expanded]="isParentActive(menu)"
+  class="parent-menu sidebar-panel"
+  style="box-shadow: none;"
+>
+  <mat-expansion-panel-header class="profile-content" style="padding: none;">
+    <mat-icon>{{ menu.iconClass }}</mat-icon>
+    <span>{{ menu.title }}</span>
+  </mat-expansion-panel-header>
 
-      <mat-expansion-panel-header>
-        <mat-icon>{{ menu.icon }}</mat-icon>
-        <span class="menu-title">{{ menu.name }}</span>
-      </mat-expansion-panel-header>
-
-      <mat-nav-list class="submenu">
-        <a
-          mat-list-item
-          *ngFor="let child of menu.children"
-          class="submenu-item"
-          [routerLink]="child.route"
-          routerLinkActive="active"
-        >
-          <mat-icon matListIcon>{{ child.icon }}</mat-icon>
-          <span matLine>{{ child.name }}</span>
-        </a>
-      </mat-nav-list>
-
-    </mat-expansion-panel>
+  <ng-container
+    *ngTemplateOutlet="menuTemplate; context:{ $implicit: menu.children }">
+  </ng-container>
+</mat-expansion-panel>
 
   </ng-container>
+
+</ng-template>
 
 </mat-nav-list>
 

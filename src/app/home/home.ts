@@ -67,7 +67,15 @@ export class Home implements OnDestroy,OnInit {
   //     });
   // }
 
-  
+
+
+isParentActive(menu: MenuItem): boolean {
+  return menu.children.some(
+    child =>
+      this.router.isActive(child.route ?? '', false) ||
+      this.isParentActive(child)
+  );
+}
 
   // ngOnDestroy(): void {
   //   this.destroyed$.next();
@@ -101,8 +109,17 @@ export class Home implements OnDestroy,OnInit {
   ) {}
 
   ngOnInit() {
-    this.menuService.initMenus();
-    this.menus = this.menuService.getMenus();
+    //this.menus = this.menuService.getMenus();
+       this.menuService.initmenus().subscribe(res => {
+  this.menus = res
+    .sort((a: { orderNumber: number; }, b: { orderNumber: number; }) => a.orderNumber - b.orderNumber)
+    .map((parent: { children: any[]; }) => ({
+      ...parent,
+      children: parent.children.sort(
+        (a, b) => a.orderNumber - b.orderNumber
+      )
+    }));
+});
 
     this.breakpointObserver
       .observe([Breakpoints.Handset])

@@ -76,7 +76,9 @@
   background-color: #f5f5f5;
   padding: 1rem;
 }
-
+::ng-deep .mat-expansion-panel-body {
+  padding: 0 !important;
+}
 
 .account-sidebar {
   width: 300px;
@@ -181,5 +183,7 @@ mat-expansion-panel-header mat-icon {
   border-radius: 12px;
   margin: 4px 0;
 }
+
+
 
 
