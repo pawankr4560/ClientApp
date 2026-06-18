@@ -40,7 +40,18 @@ export class LoanComponent implements OnInit {
 
   // simple form model for create/edit
   editing: boolean = false;
-  current!: Loan;
+  current: Loan = {
+    id: 0,
+    userId: '',
+    userName: '',
+    loanNumber: '',
+    loanAmount: 0,
+    rate: 0,
+    tenure: 0,
+    emi: 0,
+    createdDateTime: new Date().toISOString(),
+    active: true,
+  };
 
   private originalLoanNumber?: string;
 

@@ -58,7 +58,7 @@
         <mat-select
           [(ngModel)]="current.userId"
           (ngModelChange)="onCustomerChange($event)"
-          [disabled]="(current?.id ?? 0) > 0"
+          [disabled]="editing && (current.id ?? 0) > 0"
           disableOptionCentering
         >
           <mat-option value="">Select customer</mat-option>
