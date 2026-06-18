@@ -1,6 +1,6 @@
 export const environment = {
     production: false,
-    apiUrl: 'http://loantrcker.runasp.net',
+    apiUrl: 'https://loantrcker.runasp.net',
     apiKey:'PkyAIzaSyCKoMQs-ZZgHFUNglLpdGlps232@',
     testUser: {
       // tslint:disable
