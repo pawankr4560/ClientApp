@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/users/confirm-dialog-component/confirm-dialog-component.css"],
+  "sourcesContent": [".dialog-title {\r\n  display: flex;\r\n  align-items: center;\r\n  gap: 8px;\r\n  font-weight: 600;\r\n}\r\n\r\n.dialog-content {\r\n  font-size: 14px;\r\n  color: #374151;\r\n  margin-top: 8px;\r\n}\r\n\r\n.dialog-actions {\r\n  padding: 16px 24px;\r\n}\r\n"],
+  "mappings": ";AAAA,CAAC;AACC,WAAS;AACT,eAAa;AACb,OAAK;AACL,eAAa;AACf;AAEA,CAAC;AACC,aAAW;AACX,SAAO;AACP,cAAY;AACd;AAEA,CAAC;AACC,WAAS,KAAK;AAChB;",
+  "names": []
+}

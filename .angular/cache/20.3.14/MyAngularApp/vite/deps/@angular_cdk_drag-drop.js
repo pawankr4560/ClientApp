@@ -4,31 +4,31 @@ import {
   _getShadowRoot,
   isFakeMousedownFromScreenReader,
   isFakeTouchstartFromScreenReader
-} from "./chunk-BBM6Q5MB.js";
-import {
-  coerceArray
-} from "./chunk-2ZKSKDON.js";
+} from "./chunk-SWE265JH.js";
 import {
   _CdkPrivateStyleLoader
-} from "./chunk-IDFLYQ7D.js";
+} from "./chunk-O6F2R5YM.js";
+import {
+  coerceArray
+} from "./chunk-PPTNAL2X.js";
 import {
   CdkScrollable,
   CdkScrollableModule,
   ScrollDispatcher,
   ViewportRuler
-} from "./chunk-2C5KEONG.js";
-import "./chunk-5EG33CFQ.js";
-import "./chunk-FQNLEOQW.js";
+} from "./chunk-A3K42FXE.js";
+import "./chunk-6QIQYGIN.js";
+import "./chunk-7YF3GBEP.js";
 import {
   Directionality
-} from "./chunk-BJR5XMDR.js";
+} from "./chunk-6WPYAX5A.js";
 import {
   coerceElement,
   coerceNumberProperty
-} from "./chunk-KR2HT4SR.js";
-import "./chunk-DJL5CDD2.js";
-import "./chunk-M7AXRCET.js";
-import "./chunk-R6U7IGMG.js";
+} from "./chunk-ELTTJZ2S.js";
+import "./chunk-3MK4APGC.js";
+import "./chunk-73YJRTTC.js";
+import "./chunk-AOXRLVXT.js";
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -63,7 +63,7 @@ import {
   ɵɵdefineInjectable,
   ɵɵdefineInjector,
   ɵɵdefineNgModule
-} from "./chunk-LD5KEVEV.js";
+} from "./chunk-R4RCRJCF.js";
 import {
   BehaviorSubject,
   Observable,
@@ -78,10 +78,10 @@ import {
   take,
   takeUntil,
   tap
-} from "./chunk-RSS3ODKE.js";
+} from "./chunk-P6FHSXGX.js";
 import "./chunk-WDMUDEB6.js";
 
-// node_modules/@angular/cdk/fesm2022/drag-drop.mjs
+// ../../node_modules/@angular/cdk/fesm2022/drag-drop.mjs
 function deepCloneNode(node) {
   const clone = node.cloneNode(true);
   const descendantsWithId = clone.querySelectorAll("[id]");

@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/auth/signup/signup.css"],
+  "sourcesContent": [".login-container {\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n\r\n  /* Dark gradient background */\r\n  background: linear-gradient(135deg, #1f2933, #111827);\r\n}\r\n\r\n.login-card {\r\n  width: 100%;\r\n  max-width: 500px;\r\n\r\n\r\n  /* Slight contrast on dark bg */\r\n  background: #ffffff;\r\n  border-radius: 12px;\r\n  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);\r\n}\r\n\r\n.title {\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n  font-size: 24px;\r\n  font-weight: 600;\r\n  margin-bottom: 16px;\r\n  color: #111827;\r\n}\r\n\r\n.icon {\r\n  margin-right: 8px;\r\n}\r\n\r\n.full-width {\r\n  width: 100%;\r\n  margin-bottom: 16px;\r\n}\r\n\r\n.address-main {\r\n  font-weight: 500;\r\n}\r\n\r\n.address-secondary {\r\n  color: gray;\r\n  font-size: 12px;\r\n}\r\n"],
+  "mappings": ";AAAA,CAAC;AACC,WAAS;AACT,eAAa;AACb,mBAAiB;AAGjB;AAAA,IAAY;AAAA,MAAgB,MAAhB;AAAA,MAAwB,OAAxB;AAAA,MAAiC;AAC/C;AAEA,CAAC;AACC,SAAO;AACP,aAAW;AAIX,cAAY;AACZ,iBAAe;AACf,cAAY,EAAE,KAAK,KAAK,KAAK,CAAC,EAAE,CAAC,EAAE,CAAC,EAAE;AACxC;AAEA,CAAC;AACC,WAAS;AACT,eAAa;AACb,mBAAiB;AACjB,aAAW;AACX,eAAa;AACb,iBAAe;AACf,SAAO;AACT;AAEA,CAAC;AACC,gBAAc;AAChB;AAEA,CAAC;AACC,SAAO;AACP,iBAAe;AACjB;AAEA,CAAC;AACC,eAAa;AACf;AAEA,CAAC;AACC,SAAO;AACP,aAAW;AACb;",
+  "names": []
+}

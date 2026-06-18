@@ -23,7 +23,7 @@
     <a
       mat-list-item
       *ngIf="menu.children.length === 0"
-      [routerLink]="menu.route"
+      [routerLink]="getMenuPath(menu)"
       routerLinkActive="active"
       (click)="$event.stopPropagation()"
     >

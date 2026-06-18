@@ -55,32 +55,39 @@ export class Home implements OnDestroy,OnInit {
   name :string ='';
   email:string='';
   phone:string='';
-  // isMobile = false;
-  // private destroyed$ = new Subject<void>();
+  menus: MenuItem[] = [];
+  isMobile = false;
+  private destroyed$ = new Subject<void>();
 
-  // constructor(private breakpointObserver: BreakpointObserver, private router: Router) {
-  //   this.breakpointObserver
-  //     .observe([Breakpoints.Handset])
-  //     .pipe(takeUntil(this.destroyed$))
-  //     .subscribe(result => {
-  //       this.isMobile = result.matches;
-  //     });
-  // }
+  constructor(
+    private breakpointObserver: BreakpointObserver,
+    private menuService: Menu,
+    private router: Router
+  ) {}
 
+  getMenuPath(menu: MenuItem): string {
+    if (!menu.route) {
+      return '/home';
+    }
 
+    if (menu.route.startsWith('/')) {
+      return menu.route;
+    }
 
-isParentActive(menu: MenuItem): boolean {
-  return menu.children.some(
-    child =>
-      this.router.isActive(child.route ?? '', false) ||
-      this.isParentActive(child)
-  );
-}
+    if (menu.route.startsWith('home/')) {
+      return `/${menu.route}`;
+    }
 
-  // ngOnDestroy(): void {
-  //   this.destroyed$.next();
-  //   this.destroyed$.complete();
-  // }
+    return `/home/${menu.route}`;
+  }
+
+  isParentActive(menu: MenuItem): boolean {
+    return menu.children.some(
+      child =>
+        this.router.url.startsWith(this.getMenuPath(child)) ||
+        this.isParentActive(child)
+    );
+  }
 
   redirectPage() {
     this.router.navigate(['/home/product']);
@@ -96,17 +103,6 @@ isParentActive(menu: MenuItem): boolean {
     }
     else this.router.navigate(['auth']);
   }
-
-
-  menus: MenuItem[] = [];
-  isMobile = false;
-  private destroyed$ = new Subject<void>();
-
-  constructor(
-    private breakpointObserver: BreakpointObserver,
-    private menuService: Menu,
-    private router: Router
-  ) {}
 
   ngOnInit() {
     //this.menus = this.menuService.getMenus();
@@ -139,13 +135,14 @@ isParentActive(menu: MenuItem): boolean {
   }
 
   isChildActive(menu: any): boolean {
-  return menu.children?.some(
-    (child: any) => this.router.url.startsWith(child.route)
-  );
-}
+    return menu.children?.some((child: any) =>
+      this.router.url.startsWith(this.getMenuPath(child))
+    );
+  }
+
   navigate(route?: string) {
     if (route) {
-      this.router.navigate([route]);
+      this.router.navigateByUrl(this.getMenuPath({ route } as MenuItem));
     }
   }
 

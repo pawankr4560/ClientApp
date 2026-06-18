@@ -84,7 +84,7 @@ deleteUser(user: UserDetails) {
   });
 }
 }
-const USER_DATA: UserDetails[] = [
+export const USER_DATA: UserDetails[] = [
   {
     id: 1,
     email:'test1@gmail.com',

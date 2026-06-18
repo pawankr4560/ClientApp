@@ -1,5 +1,9 @@
+
 import { CommonModule } from '@angular/common';
 import { AfterViewInit, Component, ElementRef, Input, NgZone, OnInit, ViewChild } from '@angular/core';
+
+// Google Maps Places is loaded externally; declare global to satisfy TS.
+declare const google: any;
 
 @Component({
   selector: 'app-dynamic-component',
