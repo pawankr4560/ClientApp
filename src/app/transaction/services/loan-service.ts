@@ -59,11 +59,17 @@ export class LoanService {
       .get<any[]>(`${this.apiUrl}/api/Loan`, { headers: this.headers })
       .pipe(
         map((res) => {
-          // Map Id (capital) from API to id (lowercase) for consistency
-          return (res ?? []).map((loan) => ({
-            ...loan,
-            id: loan.Id ?? loan.id,
-          }));
+          const items = res ?? [];
+          // API may return null/undefined entries; filter them out safely.
+          return items
+            .filter((x) => x != null)
+            .map((loan: any) => {
+              const id = loan?.Id ?? loan?.id;
+              return {
+                ...loan,
+                id,
+              } as Loan;
+            });
         }),
         tap((loans) => {
           this.loansSubject.next(loans);

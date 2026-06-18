@@ -406,15 +406,27 @@ export class LoanComponent implements OnInit {
   }
 
   save() {
+    if (!this.current) {
+      return;
+    }
+
     if (!this.current.createdDateTime) {
       this.current.createdDateTime = new Date().toISOString();
     }
 
     if (!this.current.emi || this.current.emi === 0) {
-      this.current.emi = this.calculateEMI(this.current.loanAmount, this.current.rate ?? 0, this.current.tenure ?? 0);
+      this.current.emi = this.calculateEMI(
+        this.current.loanAmount,
+        this.current.rate ?? 0,
+        this.current.tenure ?? 0
+      );
     }
 
-    if (this.current.id) {
+    // Backend distinguishes create vs update based on id.
+    // In this UI, create starts with id=0, so treat 0 as CREATE.
+    const canUpdate = this.current.id != null && Number.isFinite(this.current.id) && this.current.id !== 0;
+
+    if (canUpdate) {
       // Ensure loanNumber is not modified when updating
       if (this.originalLoanNumber) {
         this.current.loanNumber = this.originalLoanNumber;
@@ -438,7 +450,9 @@ export class LoanComponent implements OnInit {
   }
 
   remove(loan: Loan) {
-    if (!loan.id) return;
+    if (!loan || loan.id == null || !Number.isFinite(loan.id)) {
+      return;
+    }
 
     const dialogRef = this.dialog.open(LoanDeleteConfirmDialog, {
       width: '350px',
@@ -447,7 +461,7 @@ export class LoanComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
-        this.loanService.deleteLoan(loan.id!).subscribe({
+        this.loanService.deleteLoan(loan.id as number).subscribe({
           next: () => {
             this.load();
           },
