@@ -26,6 +26,26 @@ export interface Loan {
   updatedBy?: number;
   emiSchedules?: LoanEMISchedule[];
   payments?: LoanPayment[];
+  customerDetail?: LoanCustomerDetail;
+}
+
+export interface LoanCustomerDetail {
+  id?: number;
+  loanId?: number;
+  customerAadhaarNo: string;
+  customerMobileNo: string;
+  customerAddress: string;
+  customerCity?: string;
+  customerState?: string;
+  customerPinCode?: string;
+  guarantorName?: string;
+  guarantorAadhaarNo?: string;
+  guarantorMobileNo?: string;
+  guarantorAddress?: string;
+  guarantorRelationship?: string;
+  isDeleted?: boolean;
+  createdDateTime?: string;
+  updatedDateTime?: string;
 }
 
 export interface LoanEMISchedule {
@@ -157,6 +177,15 @@ export class LoanService {
     return this.http.get<LoanDataResponse>(`${this.apiUrl}/api/Loan/loan-data`, { headers: this.headers });
   }
 
+  getScheduleByLoanNumber(loanNumber: string) {
+    return this.http
+      .get<any[]>(
+        `${this.apiUrl}/loan-number/${encodeURIComponent(loanNumber)}`,
+        { headers: this.headers }
+      )
+      .pipe(map((response) => this.normalizeSchedules(response)));
+  }
+
   private toLoanPayload(loan: Loan) {
     return {
       id: loan.id ?? 0,
@@ -174,6 +203,25 @@ export class LoanService {
         new Date().toISOString(),
       status: loan.status ?? 'Pending',
       active: loan.active ?? true,
+      customerDetail: loan.customerDetail
+        ? {
+            customerAadhaarNo: loan.customerDetail.customerAadhaarNo.trim(),
+            customerMobileNo: loan.customerDetail.customerMobileNo.trim(),
+            customerAddress: loan.customerDetail.customerAddress.trim(),
+            customerCity: loan.customerDetail.customerCity?.trim() || null,
+            customerState: loan.customerDetail.customerState?.trim() || null,
+            customerPinCode: loan.customerDetail.customerPinCode?.trim() || null,
+            guarantorName: loan.customerDetail.guarantorName?.trim() || null,
+            guarantorAadhaarNo:
+              loan.customerDetail.guarantorAadhaarNo?.trim() || null,
+            guarantorMobileNo:
+              loan.customerDetail.guarantorMobileNo?.trim() || null,
+            guarantorAddress:
+              loan.customerDetail.guarantorAddress?.trim() || null,
+            guarantorRelationship:
+              loan.customerDetail.guarantorRelationship?.trim() || null,
+          }
+        : null,
     };
   }
 
@@ -223,6 +271,12 @@ export class LoanService {
         loan?.LoanEMISchedules ?? loan?.loanEMISchedules ?? loan?.emiSchedules ?? loan?.schedules
       ),
       payments: this.normalizePayments(loan?.LoanPayments ?? loan?.loanPayments ?? loan?.payments),
+      customerDetail: this.normalizeCustomerDetail(
+        loan?.LoanCustomerDetail ??
+          loan?.loanCustomerDetail ??
+          loan?.CustomerDetail ??
+          loan?.customerDetail
+      ),
     } as Loan;
   }
 
@@ -269,5 +323,43 @@ export class LoanService {
     }
 
     return String(value).toLowerCase() === 'reducing' ? 'Reducing' : 'Flat';
+  }
+
+  private normalizeCustomerDetail(detail: any): LoanCustomerDetail | undefined {
+    if (!detail) {
+      return undefined;
+    }
+
+    return {
+      id: detail.Id ?? detail.id,
+      loanId: detail.LoanId ?? detail.loanId,
+      customerAadhaarNo:
+        detail.CustomerAadhaarNo ?? detail.customerAadhaarNo ?? '',
+      customerMobileNo:
+        detail.CustomerMobileNo ?? detail.customerMobileNo ?? '',
+      customerAddress:
+        detail.CustomerAddress ?? detail.customerAddress ?? '',
+      customerCity: detail.CustomerCity ?? detail.customerCity ?? '',
+      customerState: detail.CustomerState ?? detail.customerState ?? '',
+      customerPinCode: detail.CustomerPinCode ?? detail.customerPinCode ?? '',
+      guarantorName: detail.GuarantorName ?? detail.guarantorName ?? '',
+      guarantorAadhaarNo:
+        detail.GuarantorAadhaarNo ?? detail.guarantorAadhaarNo ?? '',
+      guarantorMobileNo:
+        detail.GuarantorMobileNo ?? detail.guarantorMobileNo ?? '',
+      guarantorAddress:
+        detail.GuarantorAddress ?? detail.guarantorAddress ?? '',
+      guarantorRelationship:
+        detail.GuarantorRelationship ?? detail.guarantorRelationship ?? '',
+      isDeleted: detail.IsDeleted ?? detail.isDeleted ?? false,
+      createdDateTime:
+        detail.CreatedDateTime ??
+        detail.createdDateTime ??
+        detail.F_Created_Date_Time,
+      updatedDateTime:
+        detail.UpdatedDateTime ??
+        detail.updatedDateTime ??
+        detail.F_Updated_Date_Time,
+    };
   }
 }

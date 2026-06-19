@@ -7,14 +7,32 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
+import { MatStepperModule } from '@angular/material/stepper';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
-import { LoanService, Loan, LoanCustomer, LoanEMISchedule, LoanPayment } from '../services/loan-service';
+import {
+  LoanService,
+  Loan,
+  LoanCustomer,
+  LoanCustomerDetail,
+  LoanEMISchedule,
+  LoanPayment,
+} from '../services/loan-service';
 import { ConfirmDialogComponent } from '../../users/confirm-dialog-component/confirm-dialog-component';
 import {
   InterestCalculationType,
   InterestSettingService,
 } from '../../setting/interest-setting.service';
+
+interface EmiPreviewRow {
+  installmentNo: number;
+  dueDate: Date;
+  emiAmount: number;
+  principalAmount: number;
+  interestAmount: number;
+  outstandingBalance: number;
+}
 
 @Component({
   selector: 'app-loan-component',
@@ -28,6 +46,8 @@ import {
     MatCheckboxModule,
     MatIconModule,
     MatSelectModule,
+    MatStepperModule,
+    MatSnackBarModule,
     MatTableModule,
     MatDialogModule,
   ],
@@ -45,6 +65,7 @@ export class LoanComponent implements OnInit {
   loanStatuses = ['Pending', 'Active', 'Closed', 'Defaulted'];
   isSaving = false;
   systemInterestType: InterestCalculationType = 'Reducing';
+  customerDetail: LoanCustomerDetail = this.createEmptyCustomerDetail();
 
   // simple form model for create/edit
   editing: boolean = false;
@@ -77,12 +98,67 @@ export class LoanComponent implements OnInit {
     }
   }
 
+  get hasGuarantor(): boolean {
+    return !!this.customerDetail.guarantorName?.trim();
+  }
+
+  get isCustomerAadhaarDuplicate(): boolean {
+    const aadhaar = this.customerDetail.customerAadhaarNo?.trim();
+    if (aadhaar.length !== 12) {
+      return false;
+    }
+
+    return this.loans.some(
+      (loan) =>
+        loan.active !== false &&
+        !loan.isDeleted &&
+        loan.id !== this.current.id &&
+        loan.customerDetail?.customerAadhaarNo === aadhaar
+    );
+  }
+
+  get emiPreview(): EmiPreviewRow[] {
+    const amount = Number(this.current.loanAmount);
+    const annualRate = Number(this.current.rate);
+    const months = Number(this.current.tenure);
+    const startDate = this.current.startDate
+      ? new Date(`${this.current.startDate}T00:00:00`)
+      : null;
+
+    if (
+      amount <= 0 ||
+      annualRate < 0 ||
+      months <= 0 ||
+      !startDate ||
+      Number.isNaN(startDate.getTime())
+    ) {
+      return [];
+    }
+
+    return this.buildEmiPreview(
+      amount,
+      annualRate,
+      months,
+      startDate,
+      this.current.interestCalculationType ?? this.systemInterestType
+    );
+  }
+
+  get previewTotalInterest(): number {
+    return this.emiPreview.reduce((total, row) => total + row.interestAmount, 0);
+  }
+
+  get previewTotalPayable(): number {
+    return this.emiPreview.reduce((total, row) => total + row.emiAmount, 0);
+  }
+
   private originalLoanNumber?: string;
 
   constructor(
     private loanService: LoanService,
     private dialog: MatDialog,
-    private interestSettingService: InterestSettingService
+    private interestSettingService: InterestSettingService,
+    private snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
@@ -230,7 +306,7 @@ export class LoanComponent implements OnInit {
         <div class="print-card">
           <div class="print-header">
             <div>
-              <h1>Loan Installment Schedule</h1>
+              <h1>GKFIN PVT LTD</h1>
               <div class="print-subtitle">Generated for loan <strong>${loan.loanNumber}</strong></div>
             </div>
             <div class="print-meta">
@@ -288,12 +364,16 @@ export class LoanComponent implements OnInit {
         .print-meta span { color: #374151; font-size: 15px; }
         .print-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
         .print-table th,
-        .print-table td { border: 1px solid #e5e7eb; padding: 14px 12px; text-align: left; }
+        .print-table td { border: 1px solid #e5e7eb; padding: 10px 8px; text-align: left; font-size: 12px; }
         .print-table th { background: #eff6ff; color: #1e3a8a; font-weight: 700; }
         .print-table tbody tr:nth-child(even) { background: #f8fafc; }
         .print-table tfoot td { border-top: 2px solid #d1d5db; }
         .print-table tfoot td strong { font-size: 15px; }
+        .print-status { display: inline-block; min-width: 62px; padding: 4px 8px; border-radius: 4px; text-align: center; font-weight: 700; }
+        .print-status-success { color: #1b5e20; background: #e8f5e9; border: 1px solid #81c784; }
+        .print-status-pending { color: #b42318; background: #ffebee; border: 1px solid #ef9a9a; }
         @media print {
+          @page { size: landscape; margin: 12mm; }
           body { background: #fff; }
           .print-page { padding: 0; }
           .print-card { box-shadow: none; border-radius: 0; }
@@ -302,60 +382,184 @@ export class LoanComponent implements OnInit {
     `;
   }
 
-  printSelected() {
-    const selected = this.selectedLoan ? [this.selectedLoan] : [];
-    if (!selected.length) {
+  private buildApiPrintPage(
+    loan: Loan,
+    schedule: LoanEMISchedule[]
+  ): string {
+    const totalEMI = schedule.reduce((sum, item) => sum + item.emiAmount, 0);
+    const totalPrincipal = schedule.reduce(
+      (sum, item) => sum + item.principalAmount,
+      0
+    );
+    const totalInterest = schedule.reduce(
+      (sum, item) => sum + item.interestAmount,
+      0
+    );
+
+    return `
+      <div class="print-page">
+        <div class="print-card">
+          <div class="print-header">
+            <div>
+              <h1>GKFIN PVT LTD</h1>
+              <div class="print-subtitle">Loan <strong>${loan.loanNumber}</strong></div>
+            </div>
+            <div class="print-meta">
+              <div><strong>Customer</strong><span>${loan.userName ?? '-'}</span></div>
+              <div><strong>Loan Amount</strong><span>INR ${loan.loanAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
+              <div><strong>Rate</strong><span>${Number(loan.rate ?? 0).toFixed(2)}%</span></div>
+              <div><strong>Interest Type</strong><span>${loan.interestCalculationType ?? '-'}</span></div>
+            </div>
+          </div>
+          <table class="print-table">
+            <thead>
+              <tr>
+                <th>No.</th>
+                <th>Due Date</th>
+                <th>EMI</th>
+                <th>Principal</th>
+                <th>Interest</th>
+                <th>Balance</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${schedule
+                .map(
+                  (item) => `
+                    <tr>
+                      <td>${item.installmentNo}</td>
+                      <td>${this.formatPrintDate(item.dueDate)}</td>
+                      <td>INR ${item.emiAmount.toFixed(2)}</td>
+                      <td>INR ${item.principalAmount.toFixed(2)}</td>
+                      <td>INR ${item.interestAmount.toFixed(2)}</td>
+                      <td>INR ${item.outstandingBalance.toFixed(2)}</td>
+                      <td>
+                        <span class="print-status ${item.isPaid ? 'print-status-success' : 'print-status-pending'}">
+                          ${item.isPaid ? 'Success' : 'Pending'}
+                        </span>
+                        ${item.isPaid && item.paidDate ? `<div>Paid on ${this.formatPrintDate(item.paidDate)}</div>` : ''}
+                      </td>
+                    </tr>`
+                )
+                .join('')}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td><strong>Total</strong></td>
+                <td></td>
+                <td><strong>INR ${totalEMI.toFixed(2)}</strong></td>
+                <td><strong>INR ${totalPrincipal.toFixed(2)}</strong></td>
+                <td><strong>INR ${totalInterest.toFixed(2)}</strong></td>
+                <td></td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>`;
+  }
+
+  private renderPrintWindow(
+    targetWindow: Window,
+    loan: Loan,
+    schedule: LoanEMISchedule[],
+    title: string
+  ): void {
+    if (!schedule.length) {
+      targetWindow.close();
+      this.snackBar.open('No EMI schedule was returned for this loan.', 'Close', {
+        duration: 4000,
+      });
       return;
     }
 
-    const content = selected.map((loan) => this.buildPrintPage(loan)).join('');
-    const styles = this.getPrintStyles();
+    targetWindow.document.open();
+    targetWindow.document.write(`
+      <html>
+        <head>
+          <title>${title}</title>
+          ${this.getPrintStyles()}
+        </head>
+        <body>${this.buildApiPrintPage(loan, schedule)}</body>
+      </html>
+    `);
+    targetWindow.document.close();
+    targetWindow.focus();
+    targetWindow.print();
+  }
+
+  private writeLoadingPage(targetWindow: Window, message: string): void {
+    targetWindow.document.write(
+      `<html><body style="font-family:Arial;padding:32px">${message}</body></html>`
+    );
+    targetWindow.document.close();
+  }
+
+  private formatPrintDate(value: string): string {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime())
+      ? '-'
+      : date.toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+        });
+  }
+
+  printSelected() {
+    const loan = this.selectedLoan;
+    if (!loan) {
+      return;
+    }
 
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
+      this.snackBar.open('Please allow popups to print the loan schedule.', 'Close', {
+        duration: 4000,
+      });
       return;
     }
 
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Loan Installment Schedule</title>
-          ${styles}
-        </head>
-        <body>${content}</body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
+    this.writeLoadingPage(printWindow, 'Loading loan schedule...');
+    this.loanService.getScheduleByLoanNumber(loan.loanNumber).subscribe({
+      next: (schedule) =>
+        this.renderPrintWindow(
+          printWindow,
+          loan,
+          schedule,
+          'GKFIN PVT LTD'
+        ),
+      error: (error) => {
+        printWindow.close();
+        this.showApiError('Unable to load the loan schedule for printing.', error);
+      },
+    });
   }
 
   exportSelectedAsPdf() {
-    const selected = this.selectedLoan ? [this.selectedLoan] : [];
-    if (!selected.length) {
+    const loan = this.selectedLoan;
+    if (!loan) {
       return;
     }
 
-    const html = selected.map((loan) => this.buildPrintPage(loan)).join('');
-    const styles = this.getPrintStyles();
     const newWindow = window.open('', '_blank');
     if (!newWindow) {
+      this.snackBar.open('Please allow popups to export the schedule.', 'Close', {
+        duration: 4000,
+      });
       return;
     }
 
-    newWindow.document.write(`
-      <html>
-        <head>
-          <title>Loan Export PDF</title>
-          ${styles}
-        </head>
-        <body>${html}</body>
-      </html>
-    `);
-    newWindow.document.close();
-    newWindow.focus();
-    // User can save as PDF from browser print dialog
-    newWindow.print();
+    this.writeLoadingPage(newWindow, 'Preparing PDF schedule...');
+    this.loanService.getScheduleByLoanNumber(loan.loanNumber).subscribe({
+      next: (schedule) =>
+        this.renderPrintWindow(newWindow, loan, schedule, 'Loan Export PDF'),
+      error: (error) => {
+        newWindow.close();
+        this.showApiError('Unable to load the loan schedule for export.', error);
+      },
+    });
   }
 
   exportSelectedAsExcel() {
@@ -476,6 +680,7 @@ export class LoanComponent implements OnInit {
       endDate: this.formatDateInput(new Date()),
       status: 'Pending',
     };
+    this.customerDetail = this.createEmptyCustomerDetail();
 
     this.loadLoanData();
   }
@@ -486,6 +691,9 @@ export class LoanComponent implements OnInit {
     this.current.startDate = this.toDateInputValue(loan.startDate);
     this.current.endDate = this.toDateInputValue(loan.endDate);
     this.originalLoanNumber = loan.loanNumber;
+    this.customerDetail = loan.customerDetail
+      ? { ...loan.customerDetail }
+      : this.createEmptyCustomerDetail();
     this.loadLoanData();
   }
 
@@ -507,6 +715,7 @@ export class LoanComponent implements OnInit {
       createdDateTime: new Date().toISOString(),
       active: true,
     };
+    this.customerDetail = this.createEmptyCustomerDetail();
     this.originalLoanNumber = undefined;
   }
 
@@ -593,6 +802,87 @@ export class LoanComponent implements OnInit {
       tenure >= 12 &&
       tenure <= 600 &&
       !!this.current.status?.trim()
+    );
+  }
+
+  saveWizard(): void {
+    if (this.isSaving || !this.isWizardValid()) {
+      this.snackBar.open('Please complete all required fields before saving.', 'Close', {
+        duration: 4000,
+        panelClass: ['error-snackbar'],
+      });
+      return;
+    }
+
+    this.current.customerDetail = { ...this.customerDetail };
+    this.current.emi = this.emiPreview[0]?.emiAmount ?? 0;
+    if (this.current.startDate && this.current.tenure) {
+      this.current.endDate = this.formatDateInput(
+        this.addMonths(
+          new Date(`${this.current.startDate}T00:00:00`),
+          this.current.tenure
+        )
+      );
+    }
+
+    this.isSaving = true;
+    this.loanService.createLoan(this.current).subscribe({
+      next: () => {
+        this.isSaving = false;
+        this.snackBar.open('Loan created successfully.', 'Close', { duration: 3000 });
+        this.cancel();
+        this.load();
+      },
+      error: (error) => {
+        this.isSaving = false;
+        this.showApiError('Loan creation failed.', error);
+      },
+    });
+  }
+
+  isCustomerStepValid(): boolean {
+    return !!this.current.userId?.trim() && !!this.current.loanNumber?.trim();
+  }
+
+  isVerificationStepValid(): boolean {
+    return (
+      /^\d{12}$/.test(this.customerDetail.customerAadhaarNo ?? '') &&
+      /^\d{10}$/.test(this.customerDetail.customerMobileNo ?? '') &&
+      !!this.customerDetail.customerAddress?.trim() &&
+      !this.isCustomerAadhaarDuplicate
+    );
+  }
+
+  isGuarantorStepValid(): boolean {
+    if (!this.hasGuarantor) {
+      return true;
+    }
+
+    return (
+      /^\d{12}$/.test(this.customerDetail.guarantorAadhaarNo ?? '') &&
+      /^\d{10}$/.test(this.customerDetail.guarantorMobileNo ?? '')
+    );
+  }
+
+  isLoanStepValid(): boolean {
+    return (
+      Number(this.current.loanAmount) > 0 &&
+      Number(this.current.rate) > 0 &&
+      Number(this.current.rate) <= 100 &&
+      Number(this.current.tenure) >= 12 &&
+      Number(this.current.tenure) <= 600 &&
+      !!this.current.startDate &&
+      !!this.current.interestCalculationType
+    );
+  }
+
+  isWizardValid(): boolean {
+    return (
+      this.isCustomerStepValid() &&
+      this.isVerificationStepValid() &&
+      this.isGuarantorStepValid() &&
+      this.isLoanStepValid() &&
+      this.emiPreview.length > 0
     );
   }
 
@@ -765,6 +1055,89 @@ export class LoanComponent implements OnInit {
     type: InterestCalculationType = this.systemInterestType
   ): number {
     return this.interestSettingService.calculateEmi(amount, rate, tenureMonths, type);
+  }
+
+  private createEmptyCustomerDetail(): LoanCustomerDetail {
+    return {
+      customerAadhaarNo: '',
+      customerMobileNo: '',
+      customerAddress: '',
+      customerCity: '',
+      customerState: '',
+      customerPinCode: '',
+      guarantorName: '',
+      guarantorAadhaarNo: '',
+      guarantorMobileNo: '',
+      guarantorAddress: '',
+      guarantorRelationship: '',
+    };
+  }
+
+  private buildEmiPreview(
+    amount: number,
+    annualRate: number,
+    months: number,
+    startDate: Date,
+    type: InterestCalculationType
+  ): EmiPreviewRow[] {
+    const rows: EmiPreviewRow[] = [];
+    let balance = amount;
+
+    if (type === 'Flat') {
+      const monthlyPrincipal = amount / months;
+      const monthlyInterest =
+        (amount * annualRate * months) / 12 / 100 / months;
+
+      for (let index = 0; index < months; index++) {
+        const principal = index === months - 1 ? balance : monthlyPrincipal;
+        balance = Math.max(0, balance - principal);
+        rows.push({
+          installmentNo: index + 1,
+          dueDate: this.addMonths(startDate, index),
+          emiAmount: this.roundMoney(principal + monthlyInterest),
+          principalAmount: this.roundMoney(principal),
+          interestAmount: this.roundMoney(monthlyInterest),
+          outstandingBalance: this.roundMoney(balance),
+        });
+      }
+      return rows;
+    }
+
+    const monthlyRate = annualRate / 1200;
+    const emi = this.calculateEMI(amount, annualRate, months, 'Reducing');
+    for (let index = 0; index < months; index++) {
+      const interest = balance * monthlyRate;
+      const principal =
+        index === months - 1 ? balance : Math.min(balance, emi - interest);
+      balance = Math.max(0, balance - principal);
+      rows.push({
+        installmentNo: index + 1,
+        dueDate: this.addMonths(startDate, index),
+        emiAmount: this.roundMoney(principal + interest),
+        principalAmount: this.roundMoney(principal),
+        interestAmount: this.roundMoney(interest),
+        outstandingBalance: this.roundMoney(balance),
+      });
+    }
+    return rows;
+  }
+
+  private roundMoney(value: number): number {
+    return Number(value.toFixed(2));
+  }
+
+  private showApiError(fallback: string, error: any): void {
+    const validationErrors = error?.error?.errors
+      ? Object.values(error.error.errors).flat().join(' ')
+      : '';
+    this.snackBar.open(
+      error?.error?.errorMessage ||
+        error?.error?.message ||
+        validationErrors ||
+        fallback,
+      'Close',
+      { duration: 5000, panelClass: ['error-snackbar'] }
+    );
   }
 }
 
