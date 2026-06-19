@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, Inject, OnInit } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -9,7 +9,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
-import { LoanService, Loan, LoanCustomer } from '../services/loan-service';
+import { LoanService, Loan, LoanCustomer, LoanEMISchedule, LoanPayment } from '../services/loan-service';
+import { ConfirmDialogComponent } from '../../users/confirm-dialog-component/confirm-dialog-component';
+import {
+  InterestCalculationType,
+  InterestSettingService,
+} from '../../setting/interest-setting.service';
 
 @Component({
   selector: 'app-loan-component',
@@ -37,6 +42,9 @@ export class LoanComponent implements OnInit {
 
   displayedColumns = ['loanNumber', 'customerName', 'tenureMonths', 'emi', 'dueDate', 'actions'];
   customers: LoanCustomer[] = [];
+  loanStatuses = ['Pending', 'Active', 'Closed', 'Defaulted'];
+  isSaving = false;
+  systemInterestType: InterestCalculationType = 'Reducing';
 
   // simple form model for create/edit
   editing: boolean = false;
@@ -47,18 +55,45 @@ export class LoanComponent implements OnInit {
     loanNumber: '',
     loanAmount: 0,
     rate: 0,
+    interestCalculationType: 'Reducing',
     tenure: 0,
     emi: 0,
+    startDate: this.formatDateInput(new Date()),
+    endDate: this.formatDateInput(new Date()),
+    status: 'Pending',
     createdDateTime: new Date().toISOString(),
     active: true,
   };
 
+  get tenureYears(): number {
+    return this.current?.tenure ? this.current.tenure / 12 : 0;
+  }
+
+  set tenureYears(val: number) {
+    if (this.current) {
+      const years = Number(val);
+      this.current.tenure = Number.isFinite(years) ? Math.round(years * 12) : 0;
+      this.updateCurrentEmi();
+    }
+  }
+
   private originalLoanNumber?: string;
 
-  constructor(private loanService: LoanService, private dialog: MatDialog) {}
+  constructor(
+    private loanService: LoanService,
+    private dialog: MatDialog,
+    private interestSettingService: InterestSettingService
+  ) {}
 
   ngOnInit(): void {
     this.loanService.loans$.subscribe((l) => (this.loans = l ?? []));
+    this.interestSettingService.load().subscribe((type) => {
+      this.systemInterestType = type;
+      if (!this.current.id) {
+        this.current.interestCalculationType = type;
+        this.updateCurrentEmi();
+      }
+    });
     this.load();
   }
 
@@ -76,7 +111,17 @@ export class LoanComponent implements OnInit {
       const loanNumber = loan.loanNumber?.toString().toLowerCase() ?? '';
       const userName = loan.userName?.toString().toLowerCase() ?? '';
       const amount = loan.loanAmount?.toString().toLowerCase() ?? '';
-      return loanNumber.includes(query) || userName.includes(query) || amount.includes(query);
+      const status = loan.status?.toString().toLowerCase() ?? '';
+      const startDate = loan.startDate?.toString().toLowerCase() ?? '';
+      const endDate = loan.endDate?.toString().toLowerCase() ?? '';
+      return (
+        loanNumber.includes(query) ||
+        userName.includes(query) ||
+        amount.includes(query) ||
+        status.includes(query) ||
+        startDate.includes(query) ||
+        endDate.includes(query)
+      );
     });
   }
 
@@ -124,6 +169,41 @@ export class LoanComponent implements OnInit {
     return this.loans.find((loan) => loan.isSelected);
   }
 
+  get selectedSchedules(): LoanEMISchedule[] {
+    return [...(this.selectedLoan?.emiSchedules ?? [])].sort(
+      (a, b) => (a.installmentNo ?? 0) - (b.installmentNo ?? 0)
+    );
+  }
+
+  get selectedPayments(): LoanPayment[] {
+    return [...(this.selectedLoan?.payments ?? [])].sort(
+      (a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime()
+    );
+  }
+
+  get paidScheduleCount(): number {
+    return this.selectedSchedules.filter((schedule) => schedule.isPaid).length;
+  }
+
+  get paidProgress(): number {
+    return this.selectedSchedules.length
+      ? Math.round((this.paidScheduleCount / this.selectedSchedules.length) * 100)
+      : 0;
+  }
+
+  getLoanScheduleCount(loan: Loan): number {
+    return loan.emiSchedules?.length ?? 0;
+  }
+
+  getLoanPaidCount(loan: Loan): number {
+    return loan.emiSchedules?.filter((schedule) => schedule.isPaid).length ?? 0;
+  }
+
+  getLoanPaidProgress(loan: Loan): number {
+    const total = this.getLoanScheduleCount(loan);
+    return total ? Math.round((this.getLoanPaidCount(loan) / total) * 100) : 0;
+  }
+
   onLoanSelected(loan: Loan) {
     const wasSelected = !!loan.isSelected;
     this.loans.forEach((item) => {
@@ -134,12 +214,16 @@ export class LoanComponent implements OnInit {
     }
   }
 
+  getStatusClass(status: string | null | undefined): string {
+    return `status-${(status ?? 'Pending').toLowerCase()}`;
+  }
+
   private buildPrintPage(loan: Loan): string {
     const schedule = this.generateInstallmentSchedule(loan);
     const totalEMI = schedule.reduce((sum, item) => sum + item.emi, 0);
     const loanAmount = loan.loanAmount ?? 0;
     const rate = loan.rate ?? 0;
-    const tenure = loan.tenure ?? 0;
+    const tenureYears = loan.tenure ? loan.tenure / 12 : 0;
 
     return `
       <div class="print-page">
@@ -153,7 +237,7 @@ export class LoanComponent implements OnInit {
               <div><strong>Customer</strong><span>${loan.userName ?? '-'}</span></div>
               <div><strong>Loan Amount</strong><span>₹${loanAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
               <div><strong>Rate</strong><span>${rate.toFixed(2)}%</span></div>
-              <div><strong>Tenure</strong><span>${tenure} months</span></div>
+              <div><strong>Tenure</strong><span>${tenureYears} years</span></div>
             </div>
           </div>
 
@@ -286,7 +370,7 @@ export class LoanComponent implements OnInit {
       'Customer',
       'Loan Amount',
       'Rate',
-      'Tenure (Months)',
+      'Tenure (Years)',
       'Month',
       'EMI',
       'Due Date',
@@ -296,7 +380,7 @@ export class LoanComponent implements OnInit {
       const schedule = this.generateInstallmentSchedule(loan);
       const loanAmount = loan.loanAmount?.toString() ?? '';
       const rate = loan.rate?.toString() ?? '';
-      const tenure = loan.tenure?.toString() ?? '';
+      const tenureYears = loan.tenure ? (loan.tenure / 12).toString() : '0';
       const customer = loan.userName ?? '';
       const loanNumber = loan.loanNumber ?? '';
 
@@ -305,7 +389,7 @@ export class LoanComponent implements OnInit {
         customer,
         loanAmount,
         rate,
-        tenure,
+        tenureYears,
         item.monthLabel,
         item.emi.toFixed(2),
         item.dueDate,
@@ -383,10 +467,14 @@ export class LoanComponent implements OnInit {
       loanNumber: '',
       loanAmount: 0,
       rate: 0,
+      interestCalculationType: this.systemInterestType,
       tenure: 0,
       emi: 0,
       createdDateTime: new Date().toISOString(),
       active: true,
+      startDate: this.formatDateInput(new Date()),
+      endDate: this.formatDateInput(new Date()),
+      status: 'Pending',
     };
 
     this.loadLoanData();
@@ -395,6 +483,8 @@ export class LoanComponent implements OnInit {
   startEdit(loan: Loan) {
     this.editing = true;
     this.current = { ...loan };
+    this.current.startDate = this.toDateInputValue(loan.startDate);
+    this.current.endDate = this.toDateInputValue(loan.endDate);
     this.originalLoanNumber = loan.loanNumber;
     this.loadLoanData();
   }
@@ -408,16 +498,22 @@ export class LoanComponent implements OnInit {
       loanNumber: '',
       loanAmount: 0,
       rate: 0,
+      interestCalculationType: this.systemInterestType,
       tenure: 0,
       emi: 0,
+      startDate: this.formatDateInput(new Date()),
+      endDate: this.formatDateInput(new Date()),
+      status: 'Pending',
       createdDateTime: new Date().toISOString(),
       active: true,
     };
     this.originalLoanNumber = undefined;
   }
 
-  save() {
-    if (!this.current) {
+  save(form: NgForm) {
+    form.control.markAllAsTouched();
+
+    if (form.invalid || !this.isLoanInputValid() || this.isSaving) {
       return;
     }
 
@@ -425,13 +521,26 @@ export class LoanComponent implements OnInit {
       this.current.createdDateTime = new Date().toISOString();
     }
 
+    if (!this.current.startDate) {
+      this.current.startDate = this.formatDateInput(new Date());
+    }
+
     if (!this.current.emi || this.current.emi === 0) {
       this.current.emi = this.calculateEMI(
         this.current.loanAmount,
         this.current.rate ?? 0,
-        this.current.tenure ?? 0
+        this.current.tenure ?? 0,
+        this.current.interestCalculationType
       );
     }
+
+    if (this.current.startDate && this.current.tenure) {
+      this.current.endDate = this.formatDateInput(
+        this.addMonths(new Date(this.current.startDate), this.current.tenure)
+      );
+    }
+
+    this.isSaving = true;
 
     // Backend distinguishes create vs update based on id.
     // In this UI, create starts with id=0, so treat 0 as CREATE.
@@ -444,20 +553,47 @@ export class LoanComponent implements OnInit {
       }
       this.loanService.updateLoan(this.current).subscribe({
         next: () => {
+          this.isSaving = false;
           this.cancel();
           this.load();
         },
-        error: (e) => console.error(e),
+        error: (e) => {
+          this.isSaving = false;
+          console.error(e);
+        },
       });
     } else {
       this.loanService.createLoan(this.current).subscribe({
         next: () => {
+          this.isSaving = false;
           this.cancel();
           this.load();
         },
-        error: (e) => console.error(e),
+        error: (e) => {
+          this.isSaving = false;
+          console.error(e);
+        },
       });
     }
+  }
+
+  private isLoanInputValid(): boolean {
+    const amount = Number(this.current.loanAmount);
+    const rate = Number(this.current.rate);
+    const tenure = Number(this.current.tenure);
+
+    return (
+      !!this.current.userId?.trim() &&
+      Number.isFinite(amount) &&
+      amount > 0 &&
+      Number.isFinite(rate) &&
+      rate > 0 &&
+      rate <= 100 &&
+      Number.isFinite(tenure) &&
+      tenure >= 12 &&
+      tenure <= 600 &&
+      !!this.current.status?.trim()
+    );
   }
 
   remove(loan: Loan) {
@@ -465,9 +601,12 @@ export class LoanComponent implements OnInit {
       return;
     }
 
-    const dialogRef = this.dialog.open(LoanDeleteConfirmDialog, {
-      width: '350px',
-      data: { loanNumber: loan.loanNumber },
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '380px',
+      data: {
+        title: 'Delete Loan',
+        message: `Are you sure you want to delete loan "${loan.loanNumber}"?`,
+      },
     });
 
     dialogRef.afterClosed().subscribe((result) => {
@@ -487,11 +626,47 @@ export class LoanComponent implements OnInit {
       return;
     }
 
-    this.current.emi = this.calculateEMI(this.current.loanAmount, this.current.rate ?? 0, this.current.tenure ?? 0);
+    this.current.emi = this.calculateEMI(
+      this.current.loanAmount,
+      this.current.rate ?? 0,
+      this.current.tenure ?? 0,
+      this.current.interestCalculationType
+    );
+    if (this.current.startDate && this.current.tenure) {
+      this.current.endDate = this.formatDateInput(
+        this.addMonths(new Date(this.current.startDate), this.current.tenure)
+      );
+    }
   }
 
   loanEMI(loan: Loan): number {
-    return loan.emi ?? this.calculateEMI(loan.loanAmount, loan.rate ?? 0, loan.tenure ?? 0);
+    return (
+      loan.emi ??
+      this.calculateEMI(
+        loan.loanAmount,
+        loan.rate ?? 0,
+        loan.tenure ?? 0,
+        loan.interestCalculationType
+      )
+    );
+  }
+
+  getLoanStartDateText(loan: Loan): string {
+    return this.formatDisplayDate(loan.startDate);
+  }
+
+  getLoanEndDateText(loan: Loan): string {
+    const endDate = this.parseBusinessDate(loan.endDate);
+    if (endDate) {
+      return this.formatDisplayDate(endDate.toISOString());
+    }
+
+    const startDate = this.parseBusinessDate(loan.startDate);
+    if (startDate && loan.tenure) {
+      return this.formatDisplayDate(this.addMonths(startDate, loan.tenure).toISOString());
+    }
+
+    return 'Not set';
   }
 
   getLoanMonthLabel(loan: Loan): string {
@@ -538,29 +713,58 @@ export class LoanComponent implements OnInit {
     return date.toLocaleString('en-US', { month: 'short' });
   }
 
+  private formatDisplayDate(value: string | undefined): string {
+    const date = this.parseBusinessDate(value);
+    if (!date) {
+      return 'Not set';
+    }
+
+    return date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+  }
+
+  private parseBusinessDate(value: string | undefined): Date | null {
+    if (!value) {
+      return null;
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime()) || date.getFullYear() < 1900) {
+      return null;
+    }
+
+    return date;
+  }
+
   private formatDateInput(date: Date): string {
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   }
 
-  calculateEMI(amount: number, rate: number, tenureMonths: number): number {
-    if (amount <= 0 || rate < 0 || tenureMonths <= 0) {
-      return 0;
+  private toDateInputValue(value: string | undefined): string {
+    if (!value) {
+      return '';
     }
 
-    const totalMonths = tenureMonths;
-    const monthlyRate = rate / 1200;
+    return this.formatDateInput(new Date(value));
+  }
 
-    if (monthlyRate === 0) {
-      return Number((amount / totalMonths).toFixed(2));
-    }
-
-    const factor = Math.pow(1 + monthlyRate, totalMonths);
-    const emi = (amount * monthlyRate * factor) / (factor - 1);
-
-    return Number(emi.toFixed(2));
+  calculateEMI(
+    amount: number,
+    rate: number,
+    tenureMonths: number,
+    type: InterestCalculationType = this.systemInterestType
+  ): number {
+    return this.interestSettingService.calculateEmi(amount, rate, tenureMonths, type);
   }
 }
 

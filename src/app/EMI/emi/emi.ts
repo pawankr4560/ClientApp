@@ -4,6 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import {
+  InterestCalculationType,
+  InterestSettingService,
+} from '../../setting/interest-setting.service';
 
 @Component({
   selector: 'app-emi',
@@ -13,7 +18,8 @@ import { MatInputModule } from '@angular/material/input';
     FormsModule,
     MatInputModule,
     MatFormFieldModule,
-    MatButtonModule
+    MatButtonModule,
+    MatSelectModule
   ],
   templateUrl: './emi.html',
   styleUrls: ['./emi.css'],
@@ -26,28 +32,26 @@ export class Emi implements OnInit {
   emi: number = 0;
   totalInterest: number = 0;
   totalPayable: number = 0;
+  interestCalculationType: InterestCalculationType = 'Reducing';
+
+  constructor(private interestSettingService: InterestSettingService) {}
 
   ngOnInit(): void {
-    this.calculateEMI();
+    this.interestSettingService.load().subscribe((type) => {
+      this.interestCalculationType = type;
+      this.calculateEMI();
+    });
   }
 
   calculateEMI(): void {
     const principal = this.loanAmount;
-    const monthlyRate = this.interestRate / 12 / 100;
     const totalMonths = this.tenure * 12;
-
-    if (monthlyRate === 0) {
-      this.emi = Math.round(principal / totalMonths);
-    } else {
-      const emiValue =
-        (principal *
-          monthlyRate *
-          Math.pow(1 + monthlyRate, totalMonths))
-        /
-        (Math.pow(1 + monthlyRate, totalMonths) - 1);
-
-      this.emi = Math.round(emiValue);
-    }
+    this.emi = this.interestSettingService.calculateEmi(
+      principal,
+      this.interestRate,
+      totalMonths,
+      this.interestCalculationType
+    );
 
     this.totalPayable = this.emi * totalMonths;
     this.totalInterest = this.totalPayable - principal;
@@ -61,6 +65,7 @@ export class Emi implements OnInit {
     this.loanAmount = 2500000;
     this.tenure = 7;
     this.interestRate = 7.75;
+    this.interestCalculationType = this.interestSettingService.currentType;
 
     this.calculateEMI();
   }

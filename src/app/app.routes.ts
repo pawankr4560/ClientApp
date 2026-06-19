@@ -12,7 +12,10 @@ import { Signup } from './auth/signup/signup';
 import { PermissionComponent } from './Menu/permissioncomponent/permissioncomponent';
 import { ItemMaster } from './item/item-master/item-master';
 import { LoanComponent } from './transaction/loan-component/loan-component';
+import { LoanPaymentComponent } from './transaction/loan-payment-component/loan-payment-component';
 import { Emi } from './EMI/emi/emi';
+import { authGuard } from './auth/guards/auth.guard';
+import { roleGuard } from './auth/guards/role.guard';
 
 
 export const routes: Routes = [
@@ -33,23 +36,25 @@ export const routes: Routes = [
   {
     path: 'home',
     component: Home,
+    canActivate: [authGuard],
     children: [
-      { path: 'dashboard', component: Dashboard },
-      { path: 'users', component: User },
-      { path: 'settings', component: Setting },
+      { path: 'dashboard', component: Dashboard, canActivate: [roleGuard], data: { roles: ['admin'] } },
+      { path: 'users', component: User, canActivate: [roleGuard], data: { roles: ['admin', 'user'] } },
+      { path: 'settings', component: Setting, canActivate: [roleGuard], data: { roles: ['admin'] } },
 
       // Inventory under Home
-      { path: 'inventory/product', component: Product },
-      { path: 'inventory/item', component: ItemMaster },
-      { path: 'inventory/transactions', component: LoanComponent },
-      { path: 'inventory/emi', component: Emi },
+      { path: 'inventory/product', component: Product, canActivate: [roleGuard], data: { roles: ['admin'] } },
+      { path: 'inventory/item', component: ItemMaster, canActivate: [roleGuard], data: { roles: ['admin'] } },
+      { path: 'inventory/transactions', component: LoanComponent, canActivate: [roleGuard], data: { roles: ['admin'] } },
+      { path: 'inventory/payments', component: LoanPaymentComponent, canActivate: [roleGuard], data: { roles: ['admin'] } },
+      { path: 'inventory/emi', component: Emi, canActivate: [roleGuard], data: { roles: ['admin'] } },
 
 
       // Other pages
-      { path: 'dynamic', component: DragDrop },
+      { path: 'dynamic', component: DragDrop, canActivate: [roleGuard], data: { roles: ['admin'] } },
 
       //setting page
-      { path: 'permission', component: PermissionComponent },
+      { path: 'permission', component: PermissionComponent, canActivate: [roleGuard], data: { roles: ['admin'] } },
 
       // Default home route
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }

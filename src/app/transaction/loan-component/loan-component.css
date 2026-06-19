@@ -1,84 +1,213 @@
 .loan-container {
-  padding: 24px;
-  background: #f8fafc;
   min-height: calc(100vh - 80px);
+  padding: 24px;
+  background: #f5f7fb;
+}
+
+.loan-header,
+.loan-toolbar,
+.loan-pagination,
+.loan-detail,
+.loan-form {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
 }
 
 .loan-header {
-  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
 }
 
-.loan-header h1 {
-  margin: 0 0 8px;
-  font-size: 28px;
+.loan-header h1,
+.form-heading h2,
+.detail-header h2,
+.schedule-panel h3,
+.payment-panel h3 {
+  margin: 0;
   color: #1f3a6f;
 }
 
-.loan-header p {
-  margin: 0;
-  color: #5f6f8f;
+.loan-header h1 {
+  font-size: 26px;
 }
 
-.loan-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+.loan-header p,
+.detail-header p,
+.muted,
+.sub-text,
+.empty-note {
+  color: #667085;
 }
 
-.loan-table th,
-.loan-table td {
-  padding: 16px;
-  border-bottom: 1px solid #e9ecef;
-  text-align: left;
+.loan-header p,
+.detail-header p,
+.empty-note {
+  margin: 4px 0 0;
 }
 
-.loan-table th {
-  background: #eef2fa;
-  color: #273f6a;
-}
-
-.loan-table tr:last-child td {
-  border-bottom: none;
-}
-
-.loan-actions {
-  margin: 12px 0;
+.loan-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  flex-wrap: wrap;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 8px;
-}
-
-.action-buttons .mat-icon-button {
-  min-width: 42px;
-  min-height: 42px;
-}
-
-.print-icon mat-icon {
-  color: #1e88e5;
-}
-
-.pdf-icon mat-icon {
-  color: #d32f2f;
-}
-
-.excel-icon mat-icon {
-  color: #2e7d32;
-}
-
-.search-box {
-  width: min(100%, 320px);
+  padding: 12px;
+  margin-bottom: 14px;
 }
 
 .search-field {
+  width: min(100%, 460px);
+}
+
+.toolbar-actions,
+.form-actions,
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.loan-form {
+  padding: 18px;
+  margin-bottom: 14px;
+}
+
+.form-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.active-field {
+  min-height: 56px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 4px;
+}
+
+.form-actions {
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.loan-table-wrap {
+  overflow-x: auto;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.loan-table,
+.mini-table {
   width: 100%;
+  border-collapse: collapse;
+}
+
+.loan-table th,
+.loan-table td,
+.mini-table th,
+.mini-table td {
+  border-bottom: 1px solid #e9edf3;
+  padding: 12px;
+  text-align: left;
+}
+
+.loan-table th,
+.mini-table th {
+  background: #eef2f8;
+  color: #273f6a;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.loan-table tr:last-child td,
+.mini-table tr:last-child td {
+  border-bottom: none;
+}
+
+.selected-row {
+  background: #f7fbff;
+}
+
+.select-col {
+  width: 48px;
+}
+
+.actions-col {
+  width: 104px;
+  white-space: nowrap;
+}
+
+.sub-text {
+  display: block;
+  margin-top: 3px;
+  font-size: 12px;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 74px;
+  min-height: 26px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.status-active,
+.status-success,
+.status-closed {
+  background: #e8f5e9;
+  color: #1b5e20;
+}
+
+.status-pending {
+  background: #fff8e1;
+  color: #8a5a00;
+}
+
+.status-defaulted {
+  background: #ffebee;
+  color: #b42318;
+}
+
+.paid-cell {
+  min-width: 90px;
+}
+
+.mini-progress,
+.progress-track {
+  overflow: hidden;
+  background: #e9edf3;
+  border-radius: 999px;
+}
+
+.mini-progress {
+  width: 84px;
+  height: 6px;
+  margin-top: 6px;
+}
+
+.mini-progress-fill,
+.progress-fill {
+  height: 100%;
+  background: #2e7d32;
 }
 
 .loan-pagination {
@@ -86,43 +215,139 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-top: 16px;
+  margin-top: 14px;
   padding: 12px 16px;
-  background: #ffffff;
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
 }
 
-.pagination-summary {
+.pagination-summary,
+.page-label {
   color: #394b63;
   font-size: 14px;
 }
 
-.pagination-controls {
+.empty-row {
+  color: #667085;
+  padding: 24px 12px;
+  text-align: center;
+}
+
+.loan-detail {
+  margin-top: 14px;
+  padding: 18px;
+}
+
+.detail-header {
   display: flex;
   align-items: center;
-  gap: 4px;
-}
-
-.page-label {
-  font-size: 14px;
-  margin: 0 8px;
-}
-
-.empty-row {
-  text-align: center;
-  padding: 24px 0;
-  color: #6c7082;
-}
-
-.loan-form {
-  background: #ffffff;
-  padding: 16px;
+  justify-content: space-between;
+  gap: 16px;
   margin-bottom: 16px;
-  border-radius: 6px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }
 
-.full-width { width: 100%; }
+.progress-block {
+  min-width: 180px;
+  text-align: right;
+  font-weight: 700;
+  color: #1f3a6f;
+}
 
-.form-actions { margin-top: 12px; display: flex; gap: 8px; }
+.progress-track {
+  height: 8px;
+  margin-top: 8px;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  gap: 16px;
+}
+
+.schedule-panel,
+.payment-panel {
+  min-width: 0;
+}
+
+.schedule-panel {
+  overflow-x: auto;
+}
+
+.schedule-panel h3,
+.payment-panel h3 {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.paid-icon {
+  color: #2e7d32;
+}
+
+.pending-icon {
+  color: #f9a825;
+}
+
+.payment-list {
+  display: grid;
+  gap: 10px;
+}
+
+.payment-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.payment-row span {
+  display: block;
+  color: #667085;
+  font-size: 12px;
+}
+
+@media (max-width: 1100px) {
+  .form-grid,
+  .detail-grid {
+    grid-template-columns: repeat(2, minmax(160px, 1fr));
+  }
+
+  .payment-panel {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 720px) {
+  .loan-container {
+    padding: 12px;
+  }
+
+  .loan-header,
+  .loan-toolbar,
+  .loan-pagination,
+  .detail-header,
+  .form-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .form-grid,
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .toolbar-actions,
+  .form-actions,
+  .pagination-controls {
+    flex-wrap: wrap;
+  }
+
+  .progress-block {
+    min-width: 0;
+    text-align: left;
+  }
+
+  .payment-row {
+    grid-template-columns: 1fr;
+  }
+}

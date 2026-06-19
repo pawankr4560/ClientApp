@@ -22,6 +22,16 @@
       </div>
 
       <div class="field">
+        <label>Interest Method</label>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-select [(ngModel)]="interestCalculationType">
+            <mat-option value="Reducing">Reducing Balance</mat-option>
+            <mat-option value="Flat">Flat Rate</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="field">
         <label>Years to Pay</label>
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Enter tenure in years</mat-label>

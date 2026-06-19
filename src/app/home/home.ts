@@ -14,6 +14,8 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatTab, MatTabGroup } from '@angular/material/tabs';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import jwtDecode from 'jwt-decode';
+import { Auth } from '../auth/auth';
+
 interface JwtPayload {
   FirstName: string;
   LastName: string;
@@ -21,6 +23,20 @@ interface JwtPayload {
   Phone: string;
   Exp?: number;
 }
+
+const ROUTE_ROLE_MAP: Record<string, string[]> = {
+  'users': ['admin', 'user'],
+  'dashboard': ['admin'],
+  'settings': ['admin'],
+  'permission': ['admin'],
+  'inventory/product': ['admin'],
+  'inventory/item': ['admin'],
+  'inventory/transactions': ['admin'],
+  'inventory/payments': ['admin'],
+  'inventory/emi': ['admin'],
+  'dynamic': ['admin']
+};
+
 @Component({
   selector: 'app-home',
   standalone: true,
@@ -62,6 +78,7 @@ export class Home implements OnDestroy,OnInit {
   constructor(
     private breakpointObserver: BreakpointObserver,
     private menuService: Menu,
+    private authService: Auth,
     private router: Router
   ) {}
 
@@ -104,19 +121,25 @@ export class Home implements OnDestroy,OnInit {
     else this.router.navigate(['auth']);
   }
 
-  ngOnInit() {
-    //this.menus = this.menuService.getMenus();
-       this.menuService.initmenus().subscribe(res => {
-  this.menus = res
-    .sort((a: { orderNumber: number; }, b: { orderNumber: number; }) => a.orderNumber - b.orderNumber)
-    .map((parent: { children: any[]; }) => ({
-      ...parent,
-      children: parent.children.sort(
-        (a, b) => a.orderNumber - b.orderNumber
-      )
-    }));
-});
+  hasAccess(route: string | null | undefined, role: string): boolean {
+    if (!route) return true;
 
+    let cleanRoute = route.trim().replace(/^\/+/g, '').replace(/\/+$/g, '');
+    if (cleanRoute.startsWith('home/')) {
+      cleanRoute = cleanRoute.substring(5);
+    }
+
+    for (const key of Object.keys(ROUTE_ROLE_MAP)) {
+      if (cleanRoute === key || cleanRoute.startsWith(key + '/')) {
+        const allowedRoles = ROUTE_ROLE_MAP[key];
+        return allowedRoles.map(r => r.toLowerCase()).includes(role.toLowerCase());
+      }
+    }
+
+    return true;
+  }
+
+  ngOnInit() {
     this.breakpointObserver
       .observe([Breakpoints.Handset])
       .pipe(takeUntil(this.destroyed$))
@@ -132,6 +155,37 @@ export class Home implements OnDestroy,OnInit {
         this.email = decodedToken.Email;
         this.phone = decodedToken.Phone;
       }
+
+      const userRole = this.authService.getRole() || 'user';
+
+      // Redirect if path is exactly '/home' or '/home/' to the first allowed landing page
+      if (this.router.url === '/home' || this.router.url === '/home/') {
+        if (userRole.toLowerCase() === 'admin') {
+          this.router.navigate(['/home/dashboard']);
+        } else {
+          this.router.navigate(['/home/users']);
+        }
+      }
+
+      this.menuService.initmenus().subscribe(res => {
+        this.menus = res
+          .map((parent: any) => {
+            const filteredChildren = (parent.children || [])
+              .filter((child: any) => this.hasAccess(child.route, userRole))
+              .sort((a: any, b: any) => (a.orderNumber || 0) - (b.orderNumber || 0));
+            return {
+              ...parent,
+              children: filteredChildren
+            };
+          })
+          .filter((parent: any) => {
+            const isRouteAllowed = this.hasAccess(parent.route, userRole);
+            const hasChildren = parent.children && parent.children.length > 0;
+            const hadNoChildrenInitially = !parent.children || parent.children.length === 0;
+            return isRouteAllowed && (hasChildren || hadNoChildrenInitially);
+          })
+          .sort((a: any, b: any) => (a.orderNumber || 0) - (b.orderNumber || 0));
+      });
   }
 
   isChildActive(menu: any): boolean {

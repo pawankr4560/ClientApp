@@ -1,24 +1,24 @@
 import {
+  SharedResizeObserver
+} from "./chunk-7Q4JNLID.js";
+import {
   MAT_RIPPLE_GLOBAL_OPTIONS,
   MatRipple
-} from "./chunk-XBRS5WG3.js";
+} from "./chunk-XKSEGMI3.js";
+import {
+  _StructuralStylesLoader
+} from "./chunk-4SY33N45.js";
 import {
   CdkPortal,
   CdkPortalOutlet,
   TemplatePortal
-} from "./chunk-FW4GU23L.js";
-import {
-  _StructuralStylesLoader
-} from "./chunk-6X7MTNKI.js";
-import {
-  SharedResizeObserver
-} from "./chunk-GQ6AJGU2.js";
-import "./chunk-AQ4IJY6M.js";
-import "./chunk-FHPXITIK.js";
+} from "./chunk-OTKFBDYH.js";
+import "./chunk-OVHENQJQ.js";
+import "./chunk-VENV3F3G.js";
+import "./chunk-46HAYV32.js";
 import {
   _animationsDisabled
-} from "./chunk-6WSW5BEN.js";
-import "./chunk-TL4W4EWX.js";
+} from "./chunk-BHNZFBWD.js";
 import {
   CdkMonitorFocus,
   CdkObserveContent,
@@ -28,31 +28,31 @@ import {
   MatCommonModule,
   SPACE,
   hasModifierKey
-} from "./chunk-QLG3GFQM.js";
-import "./chunk-ZIORUGVH.js";
-import "./chunk-6TQ3SL2D.js";
+} from "./chunk-WN3V2LL5.js";
+import "./chunk-DPJIQJLH.js";
+import "./chunk-UND65JBC.js";
 import {
   _IdGenerator
-} from "./chunk-JGV2BJPR.js";
+} from "./chunk-ICAGQF6C.js";
+import "./chunk-2ZKSKDON.js";
 import {
   CdkScrollable,
   ViewportRuler
-} from "./chunk-R5KY7SNB.js";
-import "./chunk-7RV3XM5L.js";
-import "./chunk-RYBKFHTG.js";
+} from "./chunk-UEGJ46PV.js";
+import "./chunk-7M32CYZQ.js";
+import "./chunk-5EG33CFQ.js";
 import {
   Directionality
-} from "./chunk-22SMITMC.js";
-import "./chunk-N7P6UN2F.js";
+} from "./chunk-DBEVRXET.js";
 import {
   _CdkPrivateStyleLoader
-} from "./chunk-IU62YYU5.js";
-import "./chunk-HBHUIXYF.js";
+} from "./chunk-ZGZEH6LA.js";
+import "./chunk-OCXXZYUU.js";
 import {
   Platform
-} from "./chunk-CQ5IFSNJ.js";
-import "./chunk-J2VUBLPW.js";
-import "./chunk-QSVQGQJO.js";
+} from "./chunk-GLE5XI5R.js";
+import "./chunk-MBFYZAIJ.js";
+import "./chunk-R6U7IGMG.js";
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -123,7 +123,7 @@ import {
   ɵɵtext,
   ɵɵtextInterpolate,
   ɵɵviewQuery
-} from "./chunk-W27QOQ7U.js";
+} from "./chunk-BVGE5PYQ.js";
 import {
   BehaviorSubject,
   EMPTY,
@@ -139,10 +139,10 @@ import {
   switchMap,
   takeUntil,
   timer
-} from "./chunk-Z47DVUQS.js";
+} from "./chunk-WYF26C5D.js";
 import "./chunk-WDMUDEB6.js";
 
-// ../../../../node_modules/@angular/material/fesm2022/tabs.mjs
+// node_modules/@angular/material/fesm2022/tabs.mjs
 var _c0 = ["*"];
 function MatTab_ng_template_0_Template(rf, ctx) {
   if (rf & 1) {
